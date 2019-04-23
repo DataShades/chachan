@@ -1,0 +1,25 @@
+{
+  "name": "chachan",
+  "version": "0.0.1",
+  "description": "Socket-based backend for chat with common functionality",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DataShades/chachan.git"
+  },
+  "keywords": [
+    "socket.io",
+    "chat",
+    "redis",
+    "mongodb"
+  ],
+  "author": "Sergey Motornyuk",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/DataShades/chachan/issues"
+  },
+  "homepage": "https://github.com/DataShades/chachan#readme"
+}
