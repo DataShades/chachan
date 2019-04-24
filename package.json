@@ -2,9 +2,15 @@
   "name": "chachan",
   "version": "0.0.1",
   "description": "Socket-based backend for chat with common functionality",
-  "main": "dist/index.js",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
   "scripts": {
-    "test": "test"
+    "test": "test",
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "format": "prettier --write \"src/**/*.ts\" \"src/**/*.js\"",
+    "lint": "tslint -p tsconfig.json",
+    "prepare": "npm run build"
   },
   "repository": {
     "type": "git",
@@ -21,5 +27,19 @@
   "bugs": {
     "url": "https://github.com/DataShades/chachan/issues"
   },
-  "homepage": "https://github.com/DataShades/chachan#readme"
+  "homepage": "https://github.com/DataShades/chachan#readme",
+  "files": [
+    "lib/**/*"
+  ],
+  "devDependencies": {
+    "tslint": "^5.16.0",
+    "tslint-config-prettier": "^1.18.0",
+    "typescript": "^3.4.5"
+  },
+  "dependencies": {
+    "@types/mongoose": "^5.3.26",
+    "@types/socket.io": "^2.1.2",
+    "mongoose": "^5.5.3",
+    "socket.io": "^2.2.0"
+  }
 }
