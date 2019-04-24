@@ -1,30 +1,37 @@
 import { Server } from 'http';
-
+import { IClientHooks, IMiddleware, SocketListener } from './types';
+import {listen} from './listeners';
 import socket from 'socket.io';
 
-export interface IMiddleware {
-  (data: socket.Socket, next: CallableFunction): void;
-}
 export class PersistentChatWithRooms {
   private chat: socket.Namespace;
+  private hooks: IClientHooks = {};
 
-  constructor(server: Server|number, _opts?: any) {
-    this.chat = socket(server).of('chachan/chat')
+  constructor(server: Server | number, _opts?: any) {
+    this.chat = socket(server).of('chachan/chat');
   }
 
   use(...middlewares: IMiddleware[]) {
-    middlewares.forEach(middleware => this.chat.use(middleware))
+    middlewares.forEach(middleware => this.chat.use(middleware));
+    return this;
   }
 
-  setUpServer() {
-    this.chat.on('connect', socket => {
-      socket.on('message', data => socket.broadcast.send(data))
-      console.log(`Connected: ${socket.id}`);
-      socket.send(`Hello, ${socket.id}!`)
-      socket.broadcast.send(`[new member] ${socket.id}`);
-      socket.on('disconnect',  () => {
-        console.log(`Disconnected: ${socket.id}`);
-      })
-    });
+  on(event: string, listener: SocketListener) {
+    this.chat.on(event, listener);
+    return this;
+  }
+
+  private prepareNewClient(client: socket.Socket): void {
+    listen(client, this.hooks, this.chat)
+  }
+
+  setClientHooks(hooks: IClientHooks = {}) {
+    this.hooks = hooks;
+    return this;
+  }
+
+  start() {
+    this.chat.on('connect', socket => this.prepareNewClient(socket));
+    return this;
   }
 }
