@@ -1,6 +1,6 @@
 {
   "name": "chachan",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Socket-based backend for chat with common functionality",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",

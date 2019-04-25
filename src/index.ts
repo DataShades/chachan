@@ -1,7 +1,9 @@
 import { Server } from 'http';
 import { IClientHooks, IMiddleware, SocketListener } from './types';
-import {listen} from './listeners';
+import { listen } from './listeners';
 import socket from 'socket.io';
+
+export { StopException } from './exceptions';
 
 export class PersistentChatWithRooms {
   private chat: socket.Namespace;
@@ -22,7 +24,7 @@ export class PersistentChatWithRooms {
   }
 
   private prepareNewClient(client: socket.Socket): void {
-    listen(client, this.hooks, this.chat)
+    listen(client, this.hooks);
   }
 
   setClientHooks(hooks: IClientHooks = {}) {
@@ -33,5 +35,11 @@ export class PersistentChatWithRooms {
   start() {
     this.chat.on('connect', socket => this.prepareNewClient(socket));
     return this;
+  }
+
+  setRooms(user: string, rooms: string[]) {
+    Object.values(this.chat.sockets)
+      .filter(socket => socket.request.user === user)
+      .forEach(client => rooms.forEach(room => client.join(room)));
   }
 }
