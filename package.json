@@ -18,9 +18,7 @@
   },
   "keywords": [
     "socket.io",
-    "chat",
-    "redis",
-    "mongodb"
+    "chat"
   ],
   "author": "Sergey Motornyuk",
   "license": "ISC",
