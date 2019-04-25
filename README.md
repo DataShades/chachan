@@ -54,17 +54,23 @@ import { PersistentChatWithRooms } from 'chachan';
 const chat = new PersistentChatWithRooms(3000);
 const Rooms = new Map<string, Set<string>>()
 chat.setClientHooks({
-  roomCreate: {before: (socket, data) => {
+  roomCreate: {before: (socket, data = {}) => {
     const {user} = socket.request;
+    if (!user) {
+      return data;
+    }
+
     const {room} = data
+
     if (!Rooms.get(user)) {
       Rooms.set(user, new Set)
     }
     Rooms.get(user)!.add(room)
     return data;
   }},
-  userLogin: {after: (_socket, {user}) => {
+  userLogin: {after: (_socket, {user}={}) => {
     chat.setRooms(user, Array.from(Rooms.get(user)||[]))
+    return {user}
   }}
 
 })
