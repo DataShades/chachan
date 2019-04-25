@@ -30,8 +30,15 @@ const userLogout: Listener = socket => {
 const roomList: Listener = socket => Object.keys(socket.rooms).filter(room => !room.endsWith(socket.id));
 const roomDetails: Listener = (_socket, data) => data;
 const roomCreate: Listener = (socket, { room }) => {
-  mustExist(socket, room, 'room') && socket.join(room);
-  return { room };
+  if (!mustExist(socket, room, 'room')) {
+    return { room };
+  }
+  const user = socket.request.user;
+  const client = Object.values(socket.nsp.sockets).filter(s => user === s.request.user);
+  client.forEach(c => c.join(room));
+  const data = { user, room };
+  socket.broadcast.to(room).emit('room:joined', data);
+  return data;
 };
 
 const roomVisit: Listener = (socket, { room }) => {
