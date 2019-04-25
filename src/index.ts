@@ -42,4 +42,8 @@ export class PersistentChatWithRooms {
       .filter(socket => socket.request.user === user)
       .forEach(client => rooms.forEach(room => client.join(room)));
   }
+
+  getServer() {
+    return this.chat;
+  }
 }

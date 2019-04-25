@@ -1,6 +1,10 @@
 import { IClientHooks, Listener, BeforeAfterHooks } from './types';
 import socket from 'socket.io';
 import { StopException } from './exceptions';
+import debug from 'debug';
+
+const log = debug('chachan:listeners');
+const logError = log.extend('error');
 
 const mustExist = (socket: socket.Socket, value: any, key: string): boolean => {
   if (value) {
@@ -9,9 +13,10 @@ const mustExist = (socket: socket.Socket, value: any, key: string): boolean => {
   socket.emit('error:validation', { error: `<${key}> must be specified` });
   return false;
 };
+
 const userLogin: Listener = (socket, { user }) => {
   if (!mustExist(socket, user, 'user')) {
-    return;
+    return { user };
   }
   socket.request.user = user;
   return { user };
@@ -31,7 +36,7 @@ const roomCreate: Listener = (socket, { room }) => {
 
 const roomVisit: Listener = (socket, { room }) => {
   if (!mustExist(socket, room, 'room')) {
-    return;
+    return { room };
   }
   const data = { room, user: socket.request.user };
   socket.broadcast.to(room).emit('room:visited', data);
@@ -39,7 +44,7 @@ const roomVisit: Listener = (socket, { room }) => {
 };
 const roomJoin: Listener = (socket, { room }) => {
   if (!mustExist(socket, room, 'room')) {
-    return;
+    return { room };
   }
   const client = Object.values(socket.nsp.sockets).filter(s => socket.request.user === s.request.user);
   client.forEach(c => c.join(room));
@@ -49,11 +54,11 @@ const roomJoin: Listener = (socket, { room }) => {
 };
 const roomInvite: Listener = (socket, { room, user }) => {
   if (!mustExist(socket, user, 'user') || !mustExist(socket, room, 'room')) {
-    return;
+    return { room, user };
   }
   const client = Object.values(socket.nsp.sockets).filter(s => user === s.request.user);
   if (!client.length) {
-    return;
+    return { room, user };
   }
   client.forEach(c => c.join(room));
   const data = { room, user, by: socket.request.user };
@@ -63,7 +68,7 @@ const roomInvite: Listener = (socket, { room, user }) => {
 
 const message: Listener = (client, data) => {
   if (!mustExist(client, data.room, 'room')) {
-    return;
+    return data;
   }
 
   client.broadcast.to(data.room).send(data);
@@ -85,7 +90,7 @@ export const listen = (client: socket.Socket, hooks: IClientHooks): void => {
 
   listeners.forEach(([prop, event, handler]) => {
     const { before, after } = hooks[prop] || ({} as BeforeAfterHooks<Listener>);
-    client.on(event, async (data: any, cb: CallableFunction) => {
+    client.on(event, async (data: any = {}, cb: CallableFunction) => {
       if (before) {
         try {
           data = await before(client, data);
@@ -93,12 +98,26 @@ export const listen = (client: socket.Socket, hooks: IClientHooks): void => {
           if (e instanceof StopException) {
             return;
           }
+          logError(`ERROR: event: ${event}, hook: before`, e);
           throw e;
         }
       }
-      let result = await handler(client, data);
+      let result;
+      try {
+        result = await handler(client, data);
+      } catch (e) {
+        logError(`ERROR: event: ${event}, handler`, e);
+        throw e;
+      }
+
+      log(event, data, result);
       if (after) {
-        result = await after(client, result);
+        try {
+          result = await after(client, result);
+        } catch (e) {
+          logError(`ERROR: event: ${event}, hook: after`, e);
+          throw e;
+        }
       }
       cb && cb(result);
     });
