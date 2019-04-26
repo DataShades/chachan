@@ -59,6 +59,17 @@ const roomJoin: Listener = (socket, { room }) => {
   socket.broadcast.to(room).emit('room:joined', data);
   return data;
 };
+const roomLeave: Listener = (socket, { room }) => {
+  if (!mustExist(socket, room, 'room')) {
+    return { room };
+  }
+  const client = Object.values(socket.nsp.sockets).filter(s => socket.request.user === s.request.user);
+  client.forEach(c => c.leave(room));
+  const data = { room, user: socket.request.user };
+  socket.broadcast.to(room).emit('room:joined', data);
+  return data;
+};
+
 const roomInvite: Listener = (socket, { room, user }) => {
   if (!mustExist(socket, user, 'user') || !mustExist(socket, room, 'room')) {
     return { room, user };
@@ -68,6 +79,19 @@ const roomInvite: Listener = (socket, { room, user }) => {
     return { room, user };
   }
   client.forEach(c => c.join(room));
+  const data = { room, user, by: socket.request.user };
+  socket.broadcast.to(room).emit('room:invited', data);
+  return data;
+};
+const roomExpell: Listener = (socket, { room, user }) => {
+  if (!mustExist(socket, user, 'user') || !mustExist(socket, room, 'room')) {
+    return { room, user };
+  }
+  const client = Object.values(socket.nsp.sockets).filter(s => user === s.request.user);
+  if (!client.length) {
+    return { room, user };
+  }
+  client.forEach(c => c.leave(room));
   const data = { room, user, by: socket.request.user };
   socket.broadcast.to(room).emit('room:invited', data);
   return data;
@@ -91,7 +115,9 @@ export const listen = (client: socket.Socket, hooks: IClientHooks): void => {
     ['roomVisit', 'room:visit', roomVisit],
     ['roomCreate', 'room:create', roomCreate],
     ['roomJoin', 'room:join', roomJoin],
+    ['roomLeave', 'room:leave', roomLeave],
     ['roomInvite', 'room:invite', roomInvite],
+    ['roomExpell', 'room:expell', roomExpell],
     ['message', 'message', message],
   ];
 
