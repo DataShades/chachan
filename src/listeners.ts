@@ -1,10 +1,11 @@
-import { IClientHooks, Listener, BeforeAfterHooks } from './types';
+import { IClientHooks, Listener, BeforeAfterHooks, Hooks } from './types';
 import socket from 'socket.io';
 import { StopException } from './exceptions';
 import debug from 'debug';
 
 const log = debug('chachan:listeners');
 const logError = log.extend('error');
+const logDebug = log.extend('debug');
 
 const mustExist = (socket: socket.Socket, value: any, key: string): boolean => {
   if (value) {
@@ -80,6 +81,62 @@ const message: Listener = (client, data) => {
 
   client.broadcast.to(data.room).send(data);
   return data;
+};
+
+const _second = (_: any, result: any) => result;
+
+export const listenWithHooks = (client: socket.Socket, hooks: Hooks, hookedEvents: string[]): void => {
+  for (let i = 0; i < hookedEvents.length; ++i) {
+    const eventName = hookedEvents[i];
+    const normalizedName = eventName
+      .split(':')
+      .map((word, idx) => (idx ? word[0].toUpperCase() + word.slice(1) : word))
+      .join('');
+
+    const { before = _second, on = _second, after = _second } = hooks[normalizedName] || ({} as Hooks);
+    client.on(eventName, async (data: any = {}, cb: CallableFunction) => {
+      logDebug(`<${eventName}> emitted.`);
+      try {
+        data = await before(client, data);
+      } catch (e) {
+        if (e instanceof StopException) {
+          logDebug(`<${eventName}> had been stopped in before phase.`);
+          return;
+        }
+        logError(`ERROR: event: ${eventName}, hook: before`, e);
+        throw e;
+      }
+
+      let result;
+      try {
+        result = await on(client, data);
+      } catch (e) {
+        logError(`ERROR: event: ${eventName}, hook: on`, e);
+        throw e;
+      }
+
+      try {
+        result = await after(client, result);
+      } catch (e) {
+        logError(`ERROR: event: ${eventName}, hook: after`, e);
+        throw e;
+      }
+
+      cb && cb(result);
+    });
+  }
+};
+
+export const nativeHooks = {
+  userLogin,
+  userLogout,
+  roomList,
+  roomDetails,
+  roomVisit,
+  roomCreate,
+  roomJoin,
+  roomInvite,
+  message,
 };
 
 export const listen = (client: socket.Socket, hooks: IClientHooks): void => {
