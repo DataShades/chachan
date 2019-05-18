@@ -159,7 +159,9 @@ export const nativeHooks = {
   roomVisit,
   roomCreate,
   roomJoin,
+  roomLeave,
   roomInvite,
+  roomExpell,
   message,
 };
 

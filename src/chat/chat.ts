@@ -34,7 +34,9 @@ export class Chat {
     roomVisit: { on: nativeHooks.roomVisit },
     roomCreate: { on: nativeHooks.roomCreate },
     roomJoin: { on: nativeHooks.roomJoin },
+    roomLeave: { on: nativeHooks.roomLeave },
     roomInvite: { on: nativeHooks.roomInvite },
+    roomExpell: { on: nativeHooks.roomExpell },
     message: { on: nativeHooks.message },
   };
   private hookedEvents: string[] = [
@@ -45,7 +47,9 @@ export class Chat {
     'room:visit',
     'room:create',
     'room:join',
+    'room:leave',
     'room:invite',
+    'room:expell',
     'message',
   ];
 
