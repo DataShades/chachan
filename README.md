@@ -38,7 +38,9 @@ List of handlers and events that are triggering them:
 * roomDetails - room:details
 * roomCreate - room:create
 * roomJoin - room:join
+* roomLeave - room:leave
 * roomInvite - room:invite
+* roomExpell - room:expell
 * message - message
 
 ## Client events

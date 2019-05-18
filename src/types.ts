@@ -25,7 +25,8 @@ export interface IClientHooks {
   roomDetails?: BeforeAfterHooks<Listener>;
   roomCreate?: BeforeAfterHooks<Listener>;
   roomJoin?: BeforeAfterHooks<Listener>;
+  roomLeave?: BeforeAfterHooks<Listener>;
   roomInvite?: BeforeAfterHooks<Listener>;
-
+  roomExpell?: BeforeAfterHooks<Listener>;
   message?: BeforeAfterHooks<Listener>;
 }
